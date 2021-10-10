@@ -6,6 +6,7 @@ library(tidyverse)
 library(RSocrata)
 library(scales)
 library(ggthemes)
+library(lubridate)
 
 rm(list = ls())
 
@@ -54,9 +55,7 @@ for (i in API_list_budget) {
 budget_ordinances_clean <- budget_ordinances %>% 
   mutate(
     ordinance_amount = case_when(
-      year == 2019 ~ as.numeric(X_ordinance_amount_),
-      year == 2020 ~ as.numeric(X_ordinance_amount_),
-      year == 2021 ~ as.numeric(X_ordinance_amount_),
+      year == 2019 | 2020 |2021 ~ as.numeric(X_ordinance_amount_),
       year == 2022 ~ as.numeric(recommendation))
     ) %>% 
   select(-c(X_ordinance_amount_,
@@ -91,6 +90,33 @@ budget_ordinances_clean %>%
        subtitle = "Millions of $",
        caption = "data.cityofchicago.gov") +
   theme_fivethirtyeight()
+
+# Titles & Salaries -------------------------------------------------------
+
+API_list_salaries <- c("7zkb-yr4j", # 2019
+                       "txys-725h", # 2020
+                       "gcwx-xm5a", # 2021
+                       "kwap-s85k") # 2022 (recommended budget)
+
+year = 2019
+
+titles_salaries <- data.frame()
+
+for (i in API_list_salaries){
+  x <- paste0("https://data.cityofchicago.org/resource/", i, ".json")
+  y <- read.socrata(x)
+  y$year = year
+  year = year + 1
+  titles_salaries <- bind_rows(titles_salaries, y)
+}
+
+# we can look at this later, just wana see growth in epis over time
+titles_salaries_clean <- titles_salaries %>% 
+  mutate(
+    total_budgeted_unit = as.numeric(total_budgeted_unit),
+    budgeted_pay_rate = as.numeric(budgeted_pay_rate),
+    total_budgeted_amount = as.numeric(total_budgeted_amount)
+    )
 
 # Covid Population Stats --------------------------------------------------
 
@@ -129,11 +155,88 @@ covid_totals %>%
   scale_x_date(
     date_labels = "%b", date_breaks = "1 month"
     ) +
-  scale_color_manual(
-    values = c("#1b9e77", "#d95f02", "#7570b3"),
+  scale_color_fivethirtyeight(
     name = "",
     labels = c("Cases", "Deaths", "Hospitalizations")
     ) +
   theme_fivethirtyeight()
 
-# but we know the pandemic has big asymmetric impacts, we can come back to this
+# death rate by race
+chi_covid_stats %>% 
+  mutate_if(
+    is.character, as.numeric
+  ) %>% 
+  pivot_longer(
+    cols = "deaths_rate_latinx":"deaths_rate_other_race_non",
+    names_to = "race",
+    values_to = "death_rate_by_race"
+  ) %>% 
+  mutate(
+    week_ends = as.Date(floor_date(date, "week"))
+  ) %>% 
+  group_by(
+    week_ends, race
+  ) %>% 
+  summarize(week_sums = sum(death_rate_by_race)
+  ) %>% 
+  ggplot() +
+  geom_line(
+    aes(week_ends, week_sums, color = race)
+  ) +
+  labs(title = "Covid Deaths by Race in Chicago",
+       subtitle = "Per 100,000 residents, 7-day moving average",
+       caption = "data.cityofchicago.org"
+  ) +
+  scale_x_date(
+    date_labels = "%b", date_breaks = "1 month"
+  ) +
+  scale_color_manual(
+    values = c("#b2e2e2", "#e7298a", "#d95f02", "#66c2a4", "#2ca25f"),
+    name = "",
+    labels = c("Asian", "Black", "Latinx", "Other", "White"),
+  ) +
+  theme_fivethirtyeight()
+
+# death rate by age
+chi_covid_stats %>% 
+  mutate_if(
+    is.character, as.numeric
+  ) %>% 
+  rowwise() %>% 
+  mutate(
+    deaths_rate_over_60 = sum(c_across(deaths_rate_age_60_69:deaths_rate_age_80)),
+    deaths_rate_under_60 = sum(c_across(deaths_rate_age_0_17:deaths_rate_age_50_59)),
+  ) %>% 
+  select(
+    -contains("age")
+  ) %>% 
+  pivot_longer(
+    cols = "deaths_rate_over_60":"deaths_rate_under_60",
+    names_to = "age",
+    values_to = "death_rate_by_age"
+  ) %>% 
+  mutate(
+    week_ends = as.Date(floor_date(date, "week"))
+  ) %>% 
+  group_by(
+    week_ends, age
+  ) %>% 
+  summarize(week_sums = sum(death_rate_by_age)
+  ) %>% 
+  ggplot() +
+  geom_line(
+    aes(week_ends, week_sums, color = age)
+  ) +
+  labs(
+    title = "Covid in Chicago 2020-2021",
+    subtitle = "Per 100,000 residents, 7-day moving average",
+    caption = "data.cityofchicago.org"
+  ) +
+  scale_x_date(
+    date_labels = "%b", date_breaks = "1 month"
+  ) +
+  scale_color_fivethirtyeight(
+    name = "",
+    labels = c("60 and over", "Under 60"),
+  ) +
+  theme_fivethirtyeight()
