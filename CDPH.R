@@ -13,7 +13,6 @@ options(scipen = 999)
 
 setwd("D:/GitHub/CDPH")
 
-
 # City Budget Data --------------------------------------------------------
 
 # data source: data.cityofchicago.gov
@@ -40,7 +39,7 @@ for (i in API_list_budget) {
   # pull dataset from data.cityofchicago.org
   y <- read.socrata(x)
   
-  # add year column seeding at 2011
+  # add year column seeding at 2019
   y$year = year
   
   # iterate years for each API call. since these are ordered in the list above, it will generate the correct value for each fiscal year of the relevant budget ordinance
@@ -93,8 +92,7 @@ budget_ordinances_clean %>%
        caption = "data.cityofchicago.gov") +
   theme_fivethirtyeight()
 
-
-# Covid population stats --------------------------------------------------
+# Covid Population Stats --------------------------------------------------
 
 # chicago covid stats (https://data.cityofchicago.org/Health-Human-Services/COVID-19-Daily-Rolling-Average-Case-Death-and-Hosp/e68t-c7fv)
 
