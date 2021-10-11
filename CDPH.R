@@ -183,7 +183,7 @@ chi_covid_stats %>%
   geom_line(
     aes(week_ends, week_sums, color = race)
   ) +
-  labs(title = "Covid Deaths by Race in Chicago",
+  labs(title = "Covid Deaths by Race in Chicago 2020-2021",
        subtitle = "Per 100,000 residents, 7-day moving average",
        caption = "data.cityofchicago.org"
   ) +
@@ -191,7 +191,7 @@ chi_covid_stats %>%
     date_labels = "%b", date_breaks = "1 month"
   ) +
   scale_color_manual(
-    values = c("#b2e2e2", "#e7298a", "#d95f02", "#66c2a4", "#2ca25f"),
+    values = c("#66c2a4", "#e7298a", "#d95f02", "#2ca25f", "#006d2c"),
     name = "",
     labels = c("Asian", "Black", "Latinx", "Other", "White"),
   ) +
@@ -228,7 +228,7 @@ chi_covid_stats %>%
     aes(week_ends, week_sums, color = age)
   ) +
   labs(
-    title = "Covid in Chicago 2020-2021",
+    title = "Covid Deaths by age Chicago 2020-2021",
     subtitle = "Per 100,000 residents, 7-day moving average",
     caption = "data.cityofchicago.org"
   ) +
