@@ -240,3 +240,7 @@ chi_covid_stats %>%
     labels = c("60 and over", "Under 60"),
   ) +
   theme_fivethirtyeight()
+
+# RDD ---------------------------------------------------------------------
+
+

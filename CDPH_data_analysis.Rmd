@@ -1,0 +1,298 @@
+---
+title: "CDPH Data Analysis"
+author: "Robert Crump"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls())
+
+library(knitr)
+opts_chunk$set(echo = TRUE,
+               warning = FALSE,
+               message = FALSE,
+               results = 'asis',
+               fig.align = "center",
+               fig.pos = "!H", 
+               out.extra = "")
+
+library(formatR)
+opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+
+library(kableExtra)
+library(stargazer)
+library(lubridate)
+library(tidyverse)
+library(ggthemes)
+library(RSocrata)
+library(lfe)
+
+options(scipen = 999)
+```
+
+## Executive Summary
+
+The COVID-19 pandemic profoundly impacted Chicago, particularly communities of color on the South and West sides. As of October 11th 2021, COVID-19 has claimed 6003 lives, mostly in majority Black and Hispanic neighborhoods and among people over 60 years old. This analysis uses City of Chicago Department of Public Health data to generate a high-level over view of pandemic trends and assess the effectiveness of vaccination rollouts in preventing death among the most vulnerable populations.
+
+### Key Findings
+
+* Covid deaths are varied over time, characterized by major spikes
+
+* 41% of covid deaths were Black, 32% were Latinx
+
+* 79% of covid deaths were over 60 years old
+
+* Vaccine deployment decreased the chances of dying by [X]%
+
+## Data
+
+I retrieved this data from the City of Chicago open data portal^[https://data.cityofchicago.org/Health-Human-Services/COVID-19-Daily-Rolling-Average-Case-Death-and-Hosp/e68t-c7fv]. This dataset contains the rolling average of cases, deaths, and hospitalization totals rates (per 100,00 people) for every seven-day period ending on each date. Every row is a single day, and 97 columns comprise various demographic categories. For this analysis, I focus on death counts and rates by age and race.
+
+This dataset treats both age and race as categorical variables. Age variables are divided into brackets: 0-17, 18-29, 30-39, etc. It's been well documented that older adults are most vulnerable to serious illness and death after getting infected with COVID-19. To simplify the analysis, I grouped age brackets into two categories: under 60 and 60 & over.
+
+## Exploratory Data Analysis
+
+```{r, include=FALSE}
+# read in data from chi portal
+data_raw <- read.socrata("https://data.cityofchicago.org/resource/e68t-c7fv.json")
+
+# clean data
+chi_covid_stats <- data_raw %>% 
+  
+  # convert variable types
+  mutate(date = as.Date(date)) %>% 
+  mutate_if(is.character, as.numeric)
+```
+
+Let's start with a broad overview of total cases, hospitilzations, and deaths over the whole pandemic. The data starts on March 13th, 2020.
+
+```{r, include=FALSE}
+chi_covid_stats %>% 
+
+  # create trend type variable for color grouping
+  pivot_longer(cols = contains("total"), 
+               names_to = "type",
+               values_to = "value") %>%
+  
+  # using rates for easy graphing
+  filter(str_detect(type, "rate")) %>% 
+
+  ggplot() +
+  geom_line(aes(date, value, color = type)) +
+  labs(title = "Covid in Chicago 2020-2021",
+       subtitle = "Per 100,000 residents, 7-day moving average",
+       caption = "data.cityofchicago.org") +
+  scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+  scale_color_fivethirtyeight(name = "",
+                              labels = c("Cases", "Deaths", "Hospitalizations")) +
+  theme_fivethirtyeight()
+```
+
+Cases spike dramatically, while hospitalizations and deaths remain relatively more stable over time. Next, let's focus in on death rates by race.
+
+```{r, include=FALSE}
+chi_covid_stats %>% 
+pivot_longer(cols = "deaths_rate_latinx":"deaths_rate_other_race_non",
+             names_to = "race",
+             values_to = "death_rate_by_race") %>% 
+  mutate(week_ends = as.Date(floor_date(date, "week"))) %>% 
+  group_by(week_ends, race) %>% 
+  summarize(week_sums = sum(death_rate_by_race)) %>% 
+  ggplot() +
+  geom_line(aes(week_ends, week_sums, color = race)) +
+  labs(title = "Covid Deaths by Race in Chicago 2020-2021",
+       subtitle = "Per 100,000 residents, 7-day moving average",
+       caption = "data.cityofchicago.org") +
+  scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+  
+  # non_black / latinx colored with green shade
+  scale_color_manual(values = c("#66c2a4", "#e7298a", "#d95f02", "#2ca25f", "#006d2c"),
+                     name = "",
+                     labels = c("Asian", "Black", "Latinx", "Other", "White")) +
+  theme_fivethirtyeight()
+```
+
+Non-Black and non-Latinx races are shaded green to highlight the racially disproportionate impacts of the pandemic. Now, let's examine death rates by age split between under and over 60 years old.
+
+```{r, include=FALSE}
+chi_covid_stats %>% 
+  rowwise() %>% 
+  mutate(deaths_rate_over_60 = sum(c_across(deaths_rate_age_60_69:deaths_rate_age_80)),
+         deaths_rate_under_60 = sum(c_across(deaths_rate_age_0_17:deaths_rate_age_50_59))) %>% 
+  select(-contains("age")) %>% 
+  pivot_longer(cols = "deaths_rate_over_60":"deaths_rate_under_60",
+               names_to = "age",
+               values_to = "death_rate_by_age") %>% 
+  mutate(week_ends = as.Date(floor_date(date, "week"))) %>% 
+  group_by(week_ends, age) %>% 
+  summarize(week_sums = sum(death_rate_by_age)) %>% 
+  ggplot() +
+  geom_line(aes(week_ends, week_sums, color = age)) +
+  labs(title = "Covid Deaths by age Chicago 2020-2021",
+       subtitle = "Per 100,000 residents, 7-day moving average",
+       caption = "data.cityofchicago.org") +
+  scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+  scale_color_fivethirtyeight(name = "", labels = c("60 and over", "Under 60")) +
+  theme_fivethirtyeight()
+```
+
+These charts illustrate the leading predictors of death following a COVID-19 infection. Below is a summary table of these findings.
+
+```{r, include=FALSE}
+# just death counts
+covid_deaths <- chi_covid_stats %>% 
+
+  # select death counts
+  select(date,
+         deaths_total,
+         deaths_black_non_latinx,
+         deaths_latinx,
+         contains("deaths_age")) %>% 
+  
+  # reduce age categories
+  rowwise() %>% 
+  mutate(deaths_under60 = sum(c_across(deaths_age_0_17:deaths_age_50_59)),
+         deaths_over60 = sum(c_across(deaths_age_60_69:deaths_age_80))) %>% 
+  
+  # revert `rowwise` back to dataframe
+  as.data.frame() %>% 
+  select(-contains("age"))
+
+# generate summary table
+sum_table <- covid_deaths %>% 
+  select(-date) %>% 
+  summarize_all(list(sum), na.rm = TRUE) %>%
+  mutate(perc_black = paste0(round(deaths_black_non_latinx / deaths_total, 2) * 100, "%"),
+         perc_latinx = paste0(round(deaths_latinx / deaths_total, 2) * 100, "%"),
+         perc_over60 = paste0(round(deaths_over60 / deaths_total, 2) * 100, "%"))
+```
+
+Summary Table
+
+|              | Full Pop. |  Black | Latinx | Over 60 |
+|:------------:|:---------:|:------:|:------:|:-------:|
+| Total Deaths |    6003   | 2431.5 | 1946.9 |   4744  |
+|  Proportion  |     -     |   41%  |   32%  |   79%   |
+
+## Statistical analysis of vaccine efficacy
+
+Beginning in December 2020, the City of Chicago began distributing vaccines to front-line healthcare workers. Over the next several months, the City introduced a phased distribution that prioritized older residents and co-morbidities^[https://www.chicago.gov/city/en/sites/covid19-vaccine/home/vaccine-distribution-phases.html].
+
+* Phase 1A: Healthcare & longterm residential care workers
+  + December 15th, 2020
+
+* Phase 1B: Over 65 years old, most essential workers, shelters & prisons
+  + January 25, 2021
+  
+* Phase 1C: 16-64 years old with co-morbidities, all essential workers
+  + March 29, 2021
+  
+* Phase 2: All Chicagoans over 16 years old
+  + April 19, 2021
+
+Phase 1B provides a clear marker in time to assess vaccine efficacy among vulnerable populations. Although it does match perfectly with age brackets in our data, it's close enough to evaluate the impact of vaccination on the 60 and over population. Since distribution takes time and immunization is delayed about two weeks after treatment, we should consider an appropriate time range around vaccination status to properly assess trends and impacts and such. For now, let's take a peak at Dec20-March21. Let's run some basic regressions with our variables of interest, deaths, race, and age.
+
+```{r, include=FALSE}
+# filter date range
+phase1B <- covid_deaths %>% 
+  filter(date >= "2020-12-01" & date <= "2021-03-31")
+
+# linear models
+model1_age <- lm(deaths_total ~ deaths_over60, data = phase1B)
+
+model2_black <- lm(deaths_total ~ deaths_black_non_latinx, data = phase1B)
+
+model3_latinx <- lm(deaths_total ~ deaths_latinx, data = phase1B)
+
+# regression table
+stargazer(model1_age,
+          model2_black,
+          model3_latinx,
+          header = FALSE,
+          type = "html")
+```
+
+```{r, include=FALSE}
+# facet_grid on each variable
+phase1B %>% 
+  select(-deaths_under60) %>% 
+  pivot_longer(cols = "deaths_black_non_latinx":"deaths_over60",
+               names_to = "demo_type",
+               values_to = "deaths_by_demo") %>% 
+  mutate(week_ends = as.Date(floor_date(date, "week")),
+         demo_type = case_when(demo_type == "deaths_black_non_latinx" ~ "Black",
+                               demo_type == "deaths_latinx" ~ "Latinx",
+                               demo_type == "deaths_over60" ~ "Over 60")) %>% 
+  group_by(week_ends, demo_type) %>% 
+  summarize(week_sums = sum(deaths_by_demo)) %>% 
+  ggplot(aes(week_ends, week_sums)) +
+  geom_smooth(method = loess) +
+  geom_point() +
+  geom_vline(aes(xintercept = as.Date("2021-01-25"), color = "red"), linetype = "dashed") +
+  facet_grid(cols = vars(demo_type)) +
+  labs(title = "Weekly Deaths Around Phase 1B") +
+  theme_fivethirtyeight() +
+  theme(legend.position = "none")
+```
+
+Hm. Looks like the trends were already on steep decline before the vaccine was made available for 65 and over. I think this indicates that the downward trend was kicked off in Phase 1A when frontline healthcare workers got vaxed. But it's also worth noting that there was a massive spike around the holiday season, so this might be more an indication of levels returning to normal and people adjusting to elevated risk.
+
+```{r, include=FALSE}
+# set date range to phase 1A
+phase1A <- covid_deaths %>% 
+  filter(date >= "2020-11-01" & date <= "2021-02-28")
+
+phase1A %>% 
+  select(-deaths_under60) %>% 
+  pivot_longer(cols = "deaths_black_non_latinx":"deaths_over60",
+               names_to = "demo_type",
+               values_to = "deaths_by_demo") %>% 
+  
+  mutate(week_ends = as.Date(floor_date(date, "week")),
+         demo_type = case_when(demo_type == "deaths_black_non_latinx" ~ "Black",
+                               demo_type == "deaths_latinx" ~ "Latinx",
+                               demo_type == "deaths_over60" ~ "Over 60")) %>% 
+  group_by(week_ends, demo_type) %>% 
+  summarize(week_sums = sum(deaths_by_demo)) %>% 
+  ggplot(aes(week_ends, week_sums)) +
+  geom_smooth(method = loess) +
+  geom_point() +
+  geom_vline(aes(xintercept = as.Date("2020-12-15"), color = "red"), linetype = "dashed") +
+  facet_grid(cols = vars(demo_type)) +
+  labs(title = "Weekly Deaths Around Phase 1A") +
+  theme(legend.position = NULL) +
+  theme_fivethirtyeight() +
+  theme(legend.position = "none")
+```
+
+So, it seems like the introduction of vaccination into the population, even when limited to healthcare workers, is what caused the massive decline in covid deaths. The later phases simply continued the same trend begun by the initial rollout. It's also worth noting that policy and behavior have significant effects on transmission as indicated by the time varying trend lines in the first charts. So the regression discontinuity we observe may be attributable to conditions outside vaccine distribution although it is strongly correlated.
+
+Let's try a two-way fixed effects model to account for time & age (as binary).
+
+```{r, include=FALSE}
+# i think this is right. `date` is time and `over/under_60` is the state
+
+deaths_age_fe <- phase1A %>% 
+  select(date, 
+         deaths_total,
+         deaths_under60,
+         deaths_over60) %>% 
+  pivot_longer(cols = "deaths_under60":"deaths_over60",
+               names_to = "age",
+               values_to = "deaths_by_age") %>% 
+  mutate(age = as.factor(age),
+         vacc_avail = if_else(date <= as.Date("2020-12-15"), 0, 1))
+
+model4_fe_age <- felm(deaths_by_age ~ vacc_avail | age, data = deaths_age_fe)
+
+stargazer(model4_fe_age, 
+          header = FALSE,
+          type = "html")
+```
+
+
+
+
+
+
