@@ -30,7 +30,7 @@ library(lfe)
 options(scipen = 999)
 ```
 
-[GitHub Repository](https://rwrcrump.com/download_sources/CDPH_data_analysis.html)
+[GitHub Repository](https://github.com/rwrcrump/CDPH)
 
 ## Executive Summary
 
