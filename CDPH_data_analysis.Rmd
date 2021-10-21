@@ -216,10 +216,8 @@ stargazer(model1_black,
           header = FALSE,
           type = "html",
           digits = 2,
-          t.auto = F,
-          p.auto = F,
           notes.align = "l",
-          notes = c("datasets::CDPH", "lm() univariate"),
+          notes = c("dataset::CDPH", "lm() univariate"),
           notes.append = TRUE,
           omit.stat=c("f"))
 ```
@@ -311,10 +309,15 @@ stargazer(rdd1,
           rdd3,
           title = "Phase 1A (Nov. 1, 2020 - Feb. 28, 2021) Regression Discontinuity Design",
           dep.var.labels = c("Deaths 60 and Over"),
-          covariate.labels = c("Vax Available (Binary)", "Black", "Vax (Binary) * Black", "Latinx", "Vax (Binary) * Latinx"),
+          covariate.labels = c("Vax Available (Binary)", "Black", "Vax (Binary) x Black", "Latinx", "Vax (Binary) x Latinx"),
           align = TRUE,
           header = FALSE,
-          type = "html")
+          type = "html",
+          digits = 2,
+          notes.align = "l",
+          notes = c("dataset::CDPH", "rdd() multivariate"),
+          notes.append = TRUE,
+          omit.stat=c("f"))
 ```
 <br/><br/>
 Model 1 estimates the causal effect $\tau$ of the initial vaccine deployment in Phase 1A for the general population 60 and older is 3.16 fewer deaths on any given day between Nov. 1, 2020 and Feb. 28, 2021. Model 2 estimates the causal effect for Black residents age 60 and older as 4.7 fewer deaths a day, and Model 3 estimates 0.285 fewer for Latinx residents.
