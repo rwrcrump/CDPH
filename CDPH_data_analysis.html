@@ -350,7 +350,7 @@ pre code {
 
 <h1 class="title toc-ignore">Chicago Covid Data Analysis</h1>
 <h4 class="author">Robert Crump</h4>
-<h4 class="date">20 October, 2021</h4>
+<h4 class="date">21 October, 2021</h4>
 
 </div>
 
@@ -990,7 +990,8 @@ rdd() multivariate
 </td>
 </tr>
 </table>
-<p><br /><br /> Model 1 estimates the causal effect <span class="math inline">\(\tau\)</span> of the initial vaccine deployment in Phase 1A for the general population 60 and older is 3.16 fewer deaths on any given day between Nov. 1, 2020 and Feb. 28, 2021. Model 2 estimates the causal effect for Black residents age 60 and older as 4.7 fewer deaths a day, and Model 3 estimates 0.285 fewer for Latinx residents.</p>
+<p><br /><br /> Model 1 estimates the causal effect <span class="math inline">\(\tau\)</span> of the initial vaccine deployment in Phase 1A for the general population 60 and older is 3.16 fewer covid deaths on any given day between Nov. 1, 2020 and Feb. 28, 2021. Model 2 estimates the causal effect for Black residents age 60 and older as 4.7 fewer covid deaths a day, and Model 3 estimates 0.285 fewer for Latinx residents.</p>
+<p>One important caveat in this final regression table is worth noting. Since the data is measuring proportions of populations within each demographic category and not individual subjects, there is some amount of colinearity. In other words, there is overlap between the dependent variable <span class="math inline">\(Y\)</span> and dependent variables <span class="math inline">\(X\)</span> since they are both death counts among age and racial groups. Ideally, I would have data on individual subjects who could be identified as either below or above 60 <em>and</em> belonging to a particular racial group. Instead, this dataset reports proportions of covid deaths among different demographic categories. The best way to think about the interaction variables <span class="math inline">\(V*X\)</span> is to consider how the proportion of covid deaths among a particular racial group contributes to or influences the proportion of covid deaths for people 60 and over.</p>
 </div>
 <div class="footnotes">
 <hr />
