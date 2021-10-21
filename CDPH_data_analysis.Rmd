@@ -46,7 +46,7 @@ The COVID-19 pandemic profoundly impacted the City of Chicago, particularly comm
 
 * Although vaccine deployment was done in phases, the initial introduction of the vaccine to healthcare workers was most strongly correlated with declines in covid deaths among vulnerable populations
 
-* The first phase of the vaccine deployment resulted in 3.16 fewer covid deaths per day for people 60 and older, 4.7 fewer for Black Chicagoans 60 and over, and an inconclusive result for Latinx Chicagoans 60 and over.
+* The first phase of the vaccine deployment resulted in 3.16 fewer covid deaths per day for people 60 and older, 1.2 fewer for Black Chicagoans 60 and over, and 2 fewer for Latinx Chicagoans 60 and over.
 
 ## Data
 
@@ -236,7 +236,7 @@ phase1B %>%
   group_by(week_ends, demo_type) %>% 
   summarize(week_sums = sum(deaths_by_demo)) %>% 
   ggplot(aes(week_ends, week_sums)) +
-  geom_smooth(method = loess) +
+  geom_smooth() +
   geom_point() +
   geom_vline(aes(xintercept = as.Date("2021-01-25"), color = "red"), linetype = "dashed") +
   facet_grid(cols = vars(demo_type)) +
@@ -287,8 +287,8 @@ There is another potentially disturbing implication in this data, although I can
 
 Finally, let's estimate vaccination efficacy on the demographics in question using a regression discontinuity design (RDD) around Phase 1A. The regression table below was created by changing the `date` variable into a binary (before and after December 15, 2020) and interacting it with racial demographics variables. The dependent variable is death counts for people 60 and over on a given day between December 1, 2020 and March 31, 2021. The RDD specification is defined by the equation below:
 
-$$Y_i = \alpha + \tau V_i  * \beta X_i + \epsilon_i$$
-Where $i$ represents a given day during Phase 1A, the dependent variable $Y$ represents deaths among people 60 and older, $\alpha$ represents the constant, $\tau$ represents the magnitude effect of vaccine availability $V$ (binary), $\beta$ represents the magnitude effect of belonging to a racial demographic $X$, and $\epsilon$ represents the error term.
+$$Y_i = \alpha + \tau V_i(binary) + \epsilon_i$$
+Where $i$ represents a given day during Phase 1A, the dependent variable $Y$ represents deaths among people 60 and older, $\alpha$ represents the constant, $\tau$ represents the magnitude effect of vaccine availability $V(binary)$ , and $\epsilon$ represents the error term.
 <br/><br/>
 ```{r}
 #RDD - difference in slopes before and after Dec 15
@@ -298,34 +298,27 @@ reg_disc <- phase1A %>%
   # create pre / post periods around Phase 1A
   mutate(vax_avail = if_else(date <= as.Date("2020-12-15"), 0, 1))
 
-rdd1 <- lm(deaths_over60 ~ vax_avail, data = reg_disc)
+rdd1 <- lm(deaths_black_non_latinx ~ vax_avail, data = reg_disc)
 
-rdd2 <- lm(deaths_over60 ~ vax_avail*deaths_black_non_latinx, data = reg_disc)
+rdd2 <- lm(deaths_latinx ~ vax_avail, data = reg_disc)
 
-rdd3 <- lm(deaths_over60 ~ vax_avail*deaths_latinx, data = reg_disc)
+rdd3 <- lm(deaths_over60 ~ vax_avail, data = reg_disc)
 
 stargazer(rdd1,
           rdd2,
           rdd3,
           title = "Phase 1A (Nov. 1, 2020 - Feb. 28, 2021) Regression Discontinuity Design",
-          dep.var.labels = c("Deaths 60 and Over"),
-          covariate.labels = c("Vax Available (Binary)", "Black", "Vax (Binary) x Black", "Latinx", "Vax (Binary) x Latinx"),
-          align = TRUE,
+          dep.var.labels = c("Black", "Latinx", "Over 60"),
+          covariate.labels = c("Vax Available (Binary)"),
           header = FALSE,
           type = "html",
           digits = 2,
           notes.align = "l",
-          notes = c("dataset::CDPH", "rdd() multivariate"),
+          notes = c("dataset::CDPH", "rdd() univariate"),
           notes.append = TRUE,
           omit.stat=c("f"))
 ```
 <br/><br/>
-Model 1 estimates the causal effect $\tau$ of the initial vaccine deployment in Phase 1A for the general population 60 and older is 3.16 fewer covid deaths on any given day between Nov. 1, 2020 and Feb. 28, 2021. Model 2 estimates the causal effect for Black residents age 60 and older as 4.7 fewer covid deaths a day. Model 3 estimates a statistically insignificant 0.285 daily decrease for Latinx residents.
+Model 1 estimates the causal effect $\tau$ of the initial vaccine deployment in Phase 1A for the general population 60 and older is 1.2 fewer covid deaths among Black Chicagoans on any given day between Nov. 1, 2020 and Feb. 28, 2021, and Model 2 estimates 2.07 fewer for Latinx residents. Model 3 estimates the largest causal effect is for people 60 and over at 3.16 fewer deaths during the 5 month timeframe examined.
 
-One important caveat in this final regression table is worth noting. Since the data is measuring proportions of populations within each demographic category and not individual subjects, there is some amount of colinearity. In other words, there is overlap between the dependent variable $Y$ and dependent variables $X$ since they are both death counts among age and racial groups. Ideally, I would have data on individual subjects who could be identified as either above or below 60 *and* belonging to a particular racial group. Instead, this dataset reports proportions of covid deaths among different demographic categories. The best way to think about the interaction variables $V*X$ is to consider how the proportion of covid deaths among a particular racial group contributes to or influences the proportion of covid deaths for people 60 and over.
-
-
-
-
-
-
+This dataset limits the ability to analyze covariates such as the interaction between race and age. Since these data are death counts across demographic categories, there is significant overlap between people over 60 and people who are Black or Latinx. At best, we can identify proportional outcomes for different demographic groups, but because we don't have individual level data, estimating the causal effects of belonging to an age *and* race category would not be a valid statistical measure.
