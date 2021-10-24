@@ -1,7 +1,7 @@
 ---
 title: "Chicago Covid Data Analysis"
 author: "Robert Crump"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "October 21, 2021"
 output: html_document
 ---
 
@@ -192,7 +192,7 @@ Near the end of 2020, the City of Chicago began distributing vaccines to frontli
 * Phase 2: April 19, 2021
   + All Chicagoans over 16 years old
 
-Phase 1B provides a clear marker in time to assess vaccine efficacy among vulnerable populations. Although it does not match perfectly with age brackets in our data, it's close enough to evaluate the impact of vaccination on the 60 & over population, including Black and Latinx folks over 60. Since distribution takes time and immunization is delayed about two weeks after treatment, we should consider an appropriate range of time around vaccine deployment to properly measure population health trends. To capture pre and post trends around Jan 25, I subsetted the data to include only death counts that fall within December 1, 2020 and March 31st, 2021.
+Phase 1B provides a clear marker in time to assess vaccine efficacy among vulnerable populations. Although it does not match perfectly with age brackets in our data, it's close enough to evaluate the impact of vaccination on the 60 & over population, including Black and Latinx folks 60 & over. Since distribution takes time and immunization is delayed about two weeks after treatment, we should consider an appropriate range of time around vaccine deployment to properly measure population health trends. To capture *pre* and *post* trends before and after Jan 25, I subsetted the data to include only death counts that fall within December 1, 2020 and March 31st, 2021.
 <br/><br/>
 ```{r}
 # filter date range
@@ -221,6 +221,7 @@ stargazer(model1_black,
           notes.append = TRUE,
           omit.stat=c("f"))
 ```
+The regression table shows the coefficients for each demographic of interest. Each has a statistically significant and negative value indicating an average reduction in deaths: 0.06 fewer per day for Black Chicagoans, 0.07 fewer for Latinx, and 0.18 for 60 & over. The chart below shows the same data in weekly totals to aid visual clarity.
 <br/><br/>
 ```{r}
 # facet_grid on each variable
@@ -245,8 +246,6 @@ phase1B %>%
   theme_fivethirtyeight() +
   theme(legend.position = "none")
 ```
-
-The regression table shows the coefficients for each demographic of interest. Each has a statistically significant and negative value indicating an average reduction in deaths: 0.06 fewer per day for Black Chicagoans, 0.07 fewer for Latinx, and 0.18 for 60 & over. Note that the chart shows the same data in weekly totals to aid visual clarity.
 
 Interestingly, the downward slope is relatively smooth across five month period on either side of the Phase 1B rollout on January 25. This indicates that the downward trend started earlier. Let's try the same thing, but looking at the timeframe around Phase 1A when the vaccine was made available to frontline healthcare workers.
 
@@ -283,12 +282,14 @@ phase1A %>%
 
 By pushing back our timeframe by one month (November 1, 2020 - Februrary 28, 2021), we can see a very clear shift in covid deaths among each demographic population subset just before the vaccine was deployed to medical staff. I think there are a few key takeaways evidenced by this chart. First, the downward trend started before vaccines came online. We see a peak between Thanksgiving and Christmas, then a steep decline heading into 2021. Infection and death rates spiked when people gathered for Thanksgiving, but started to drop afterwards. Second, once vaccines were introduced into the population through nurses and other healthcare professionals, the downward trend continued instead of spiking again after Christmas.
 
-There is another potentially disturbing implication in this data, although I cannot comment on its validity without more research and collaboration. The demographics shown in these charts don't include an occupational subset for the healthcare industry. But, deploying vaccines to them dramatically decreased covid deaths among the most vulnerable populations. One potential way to interpret this data is that frontline healthcare workers are major disease vectors themselves. The first two key takeaways point towards some counterarguments. Factors outside of vaccination (like policy and behavior) impact transmission rates, which is why we see a huge spike right before lockdowns went into effect in Spring 2020. Also, introducing vaccinations into the general population at any level may have had a similar effect. Once a virus encounters an inoculated person, it is less likely to spread to another person breaking the chain of transmission within a population.
+There is another potentially disturbing implication in this data, although I cannot comment on its validity without more research and collaboration. The demographics shown in these charts don't include an occupational subset for the healthcare industry. But, deploying vaccines to them dramatically decreased covid deaths among the most vulnerable populations. One potential way to interpret this data is that frontline healthcare workers are major disease vectors themselves. The first two key takeaways suggest potentially cogent counterarguments. Factors outside of vaccination (like policy and behavior) impact transmission rates, which is why we see a huge spike right before lockdowns went into effect in Spring 2020. Also, introducing vaccinations into the general population at any level may have had a similar effect. Once a virus encounters an inoculated person, it is less likely to spread to another person breaking the chain of transmission within a population.
 
-Finally, let's estimate vaccination efficacy on the demographics in question using a regression discontinuity design (RDD) around Phase 1A. The regression table below was created by changing the `date` variable into a binary (before and after December 15, 2020) and interacting it with racial demographics variables. The dependent variable is death counts for people 60 and over on a given day between December 1, 2020 and March 31, 2021. The RDD specification is defined by the equation below:
+### Regression Discontinuity Design
+
+Finally, let's estimate vaccination efficacy on the demographics in question using a regression discontinuity design (RDD) around Phase 1A. The regression table below was created by changing the independent `date` variable into a binary (before and after December 15, 2020), then running a similar regression as before. The dependent variables are death counts among demographic subsets on a given day between December 1, 2020 and March 31, 2021. The RDD specification is defined by the equation below:
 
 $$Y_i = \alpha + \tau V_i(binary) + \epsilon_i$$
-Where $i$ represents a given day during Phase 1A, the dependent variable $Y$ represents deaths among people 60 and older, $\alpha$ represents the constant, $\tau$ represents the magnitude effect of vaccine availability $V(binary)$ , and $\epsilon$ represents the error term.
+Where $i$ represents a given day during Phase 1A, the dependent variable $Y$ represents deaths counts for a demographic subset, $\alpha$ represents the constant, $\tau$ represents the magnitude effect of vaccine availability $V(binary)$ in the *pre* and *post* periods, and $\epsilon$ represents the error term.
 <br/><br/>
 ```{r}
 #RDD - difference in slopes before and after Dec 15
@@ -319,6 +320,6 @@ stargazer(rdd1,
           omit.stat=c("f"))
 ```
 <br/><br/>
-Model 1 estimates the causal effect $\tau$ of the initial vaccine deployment in Phase 1A for the general population 60 and older is 1.2 fewer covid deaths among Black Chicagoans on any given day between Nov. 1, 2020 and Feb. 28, 2021, and Model 2 estimates 2.07 fewer for Latinx residents. Model 3 estimates the largest causal effect is for people 60 and over at 3.16 fewer deaths during the 5 month timeframe examined.
+Model 1 estimates the causal effect $\tau$ of the initial vaccine deployment in Phase 1A as 1.2 fewer covid deaths among Black Chicagoans on any given day between Nov. 1, 2020 and Feb. 28, 2021, and Model 2 estimates 2.07 fewer for Latinx residents. Model 3 estimates the largest causal effect is for people 60 and over at 3.16 fewer deaths during the 5 month timeframe examined.
 
 This dataset limits the ability to analyze covariates such as the interaction between race and age. Since these data are death counts across demographic categories, there is significant overlap between people over 60 and people who are Black or Latinx. At best, we can identify proportional outcomes for different demographic groups. Without individual level data, estimating the causal effects of belonging to an age *and* race category would not be a valid statistical measure because the outcome variable $Y_{over 60}$ and the predictor variable $X_{race}$ are not independent of each other.
