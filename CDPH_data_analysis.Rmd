@@ -42,11 +42,11 @@ The COVID-19 pandemic profoundly impacted the City of Chicago, particularly comm
 
 * 41% of covid deaths were Black, 32% were Latinx
 
-* 79% of covid deaths were over 60 years old
+* 79% of covid deaths were 60 years old or older
 
 * Although vaccine deployment was done in phases, the initial introduction of the vaccine to healthcare workers was most strongly correlated with declines in covid deaths among vulnerable populations
 
-* The first phase of the vaccine deployment resulted in 3.16 fewer covid deaths per day for people 60 and older, 1.2 fewer for Black Chicagoans 60 and over, and 2 fewer for Latinx Chicagoans 60 and over.
+* The first phase of the vaccine deployment resulted in 1.2 fewer covid deaths on per day among Black Chicagoans, and 2 fewer for Latinx Chicagoans, and 3.16 fewer for people 60 and older
 
 ## Data
 
@@ -192,7 +192,7 @@ Near the end of 2020, the City of Chicago began distributing vaccines to frontli
 * Phase 2: April 19, 2021
   + All Chicagoans over 16 years old
 
-Phase 1B provides a clear marker in time to assess vaccine efficacy among vulnerable populations. Although it does not match perfectly with age brackets in our data, it's close enough to evaluate the impact of vaccination on the 60 & over population, including Black and Latinx folks 60 & over. Since distribution takes time and immunization is delayed about two weeks after treatment, we should consider an appropriate range of time around vaccine deployment to properly measure population health trends. To capture *pre* and *post* trends before and after Jan 25, I subsetted the data to include only death counts that fall within December 1, 2020 and March 31st, 2021.
+Phase 1B provides a clear marker in time to assess vaccine efficacy among vulnerable populations. Although it does not match perfectly with age brackets in our data, it's close enough to evaluate the impact of vaccination on the 60 and over population, including Black and Latinx folks who may fall into the same age category. Since distribution takes time and immunization is delayed about two weeks after treatment, we should consider an appropriate range of time around vaccine deployment to properly measure population health trends. To capture *pre* and *post* trends before and after Jan 25, I subsetted the data to include only death counts that fall within December 1, 2020 and March 31st, 2021.
 <br/><br/>
 ```{r}
 # filter date range
@@ -221,7 +221,7 @@ stargazer(model1_black,
           notes.append = TRUE,
           omit.stat=c("f"))
 ```
-The regression table shows the coefficients for each demographic of interest. Each has a statistically significant and negative value indicating an average reduction in deaths: 0.06 fewer per day for Black Chicagoans, 0.07 fewer for Latinx, and 0.18 for 60 & over. The chart below shows the same data in weekly totals to aid visual clarity.
+The regression table shows the coefficients for each demographic of interest. Each has a statistically significant and negative value indicating an average reduction in deaths: 0.06 fewer per day for Black Chicagoans, 0.07 fewer for Latinx, and 0.18 for 60 and over. The chart below shows the same data in weekly totals to aid visual clarity.
 <br/><br/>
 ```{r}
 # facet_grid on each variable
@@ -247,7 +247,7 @@ phase1B %>%
   theme(legend.position = "none")
 ```
 
-Interestingly, the downward slope is relatively smooth across five month period on either side of the Phase 1B rollout on January 25. This indicates that the downward trend started earlier. Let's try the same thing, but looking at the timeframe around Phase 1A when the vaccine was made available to frontline healthcare workers.
+Interestingly, the downward slope is relatively smooth across the five month period on either side of the Phase 1B rollout on January 25. This indicates that the downward trend started earlier. Let's try the same thing, but looking at the timeframe around Phase 1A when the vaccine was made available to frontline healthcare workers.
 
 It's also worth noting that a major spike in cases, hospitalizations, and deaths occurred around the holiday season, so the downward slope following that period may be at least partially attributable to trends stabilizing after a local peak.
 <br/><br/>
