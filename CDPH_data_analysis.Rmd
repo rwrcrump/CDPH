@@ -34,7 +34,7 @@ options(scipen = 999)
 
 ## Executive Summary
 
-The COVID-19 pandemic profoundly impacted the City of Chicago, particularly communities of color on the South and West sides. As of October 20th 2021, COVID-19 has claimed 6024 lives, mostly in majority Black and Hispanic neighborhoods and among people over 60 years old. This analysis uses City of Chicago Department of Public Health data to generate a high-level over view of pandemic trends and assess the effectiveness of vaccine deployment in preventing death among the most vulnerable populations.
+The COVID-19 pandemic profoundly impacted the City of Chicago, particularly communities of color on the South and West sides. As of October 20th 2021, COVID-19 has claimed 6024 lives, mostly in majority Black and Hispanic neighborhoods and among people 60 years old or older. This analysis uses City of Chicago Department of Public Health data to generate a high-level overview of pandemic trends and assess the effectiveness of vaccine deployment in preventing death among the most vulnerable populations.
 
 ### Key Findings
 
@@ -44,7 +44,7 @@ The COVID-19 pandemic profoundly impacted the City of Chicago, particularly comm
 
 * 79% of covid deaths were 60 years old or older
 
-* Although vaccine deployment was done in phases, the initial introduction of the vaccine to healthcare workers was most strongly correlated with declines in covid deaths among vulnerable populations
+* Although vaccine deployment was done in phases, the initial introduction of the vaccine to healthcare workers was most strongly correlated with reducing covid death rates among vulnerable populations
 
 * The first phase of the vaccine deployment resulted in 1.2 fewer covid deaths on per day among Black Chicagoans, and 2 fewer for Latinx Chicagoans, and 3.16 fewer for people 60 and older
 
@@ -92,7 +92,9 @@ chi_covid_stats %>%
   theme_fivethirtyeight()
 ```
 
-Cases spike dramatically at different times, while hospitalizations and deaths remain relatively more stable. Next, let's focus in on death rates by race.
+Cases spike dramatically at different times, while hospitalizations and deaths remain relatively more stable. There are few possible inferences to draw from the divergence between the three rates. First, mitigation efforts were effective in preventing most cases from developing into severe illness. Second, it's possible that cases during the later peaks were concentrated among less vulnerable people. Lastly, we improved somewhat in treatment and behavioral change to reduce exposure to vulnerable populations.
+
+Next, let's focus in on death rates by race.
 <br/><br/>
 ```{r}
 chi_covid_stats %>% 
@@ -115,7 +117,9 @@ pivot_longer(cols = "deaths_rate_latinx":"deaths_rate_other_race_non",
   theme_fivethirtyeight()
 ```
 
-Non-Black and non-Latinx races are shaded green to highlight the racially disproportionate impacts of the pandemic. Now, let's examine death rates by age split between age categories.
+Non-Black and non-Latinx races are shaded green to highlight the racially disproportionate impacts of the pandemic. Although there is some variability over time, the first and second-most covid deaths during the pandemic belong to Black and Latinx racial categories.
+
+Now, let's examine death rates by age split between two age categories.
 <br/><br/>
 ```{r}
 chi_covid_stats %>% 
@@ -184,7 +188,7 @@ Near the end of 2020, the City of Chicago began distributing vaccines to frontli
   + Healthcare & longterm residential care workers
 
 * Phase 1B: January 25, 2021
-  + Over 65 years old, most essential workers, shelters & prisons
+  + 65 years old and older, most essential workers, shelters & prisons
   
 * Phase 1C: March 29, 2021
   + 16-64 years old with co-morbidities, all essential workers
@@ -247,7 +251,7 @@ phase1B %>%
   theme(legend.position = "none")
 ```
 
-Interestingly, the downward slope is relatively smooth across the five month period on either side of the Phase 1B rollout on January 25. This indicates that the downward trend started earlier. Let's try the same thing, but looking at the timeframe around Phase 1A when the vaccine was made available to frontline healthcare workers.
+Interestingly, the downward slope is relatively smooth across the five month period on either side of the Phase 1B rollout on January 25. This indicates that the downward trend started earlier. Let's try the same thing, but now looking at the timeframe around Phase 1A when the vaccine was made available to frontline healthcare workers.
 
 It's also worth noting that a major spike in cases, hospitalizations, and deaths occurred around the holiday season, so the downward slope following that period may be at least partially attributable to trends stabilizing after a local peak.
 <br/><br/>
@@ -282,7 +286,7 @@ phase1A %>%
 
 By pushing back our timeframe by one month (November 1, 2020 - Februrary 28, 2021), we can see a very clear shift in covid deaths among each demographic population subset just before the vaccine was deployed to medical staff. I think there are a few key takeaways evidenced by this chart. First, the downward trend started before vaccines came online. We see a peak between Thanksgiving and Christmas, then a steep decline heading into 2021. Infection and death rates spiked when people gathered for Thanksgiving, but started to drop afterwards. Second, once vaccines were introduced into the population through nurses and other healthcare professionals, the downward trend continued instead of spiking again after Christmas.
 
-There is another potentially disturbing implication in this data, although I cannot comment on its validity without more research and collaboration. The demographics shown in these charts don't include an occupational subset for the healthcare industry. But, deploying vaccines to them dramatically decreased covid deaths among the most vulnerable populations. One potential way to interpret this data is that frontline healthcare workers are major disease vectors themselves. The first two key takeaways suggest potentially cogent counterarguments. Factors outside of vaccination (like policy and behavior) impact transmission rates, which is why we see a huge spike right before lockdowns went into effect in Spring 2020. Also, introducing vaccinations into the general population at any level may have had a similar effect. Once a virus encounters an inoculated person, it is less likely to spread to another person breaking the chain of transmission within a population.
+There is another potentially disturbing implication in this data, although I cannot comment on its validity without more research and collaboration. The demographics shown in these charts don't include an occupational subset for the healthcare industry. But, deploying vaccines to them dramatically decreased covid deaths among the most vulnerable populations. One potential way to interpret this data is that frontline healthcare workers are major disease vectors themselves. The first two key takeaways suggest potentially cogent counterarguments. Factors outside of vaccination (like policy and behavior) impact transmission rates, which is why we see a huge peak right before lockdowns went into effect in Spring 2020. Also, introducing vaccinations into the general population at any level may have had a similar effect. Once a virus encounters an inoculated person, it is less likely to spread to another person breaking the chain of transmission within a population.
 
 ### Regression Discontinuity Design
 
