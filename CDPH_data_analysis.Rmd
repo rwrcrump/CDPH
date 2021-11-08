@@ -175,10 +175,12 @@ sum_table <- covid_deaths %>%
 
 Covid Deaths in Chicago:
 
-|              | Full Pop. |  Black | Latinx | Over 60 |
-|:------------:|:---------:|:------:|:------:|:-------:|
-| Total Deaths |    6024   | 2443.1 | 1951.5 |   4754.7|
-|  Proportion  |     -     |   41%  |   32%  |   79%   |
+|  | Total Deaths | Proportion |
+|:---:|:---:|:---:|
+| Full Pop. | 6024 | 100% |
+| Black | 2443.1 | 41% |
+| Latinx | 1951.5 | 32% |
+| Over 60 | 4754.7 | 79% |
 
 ## Statistical analysis of vaccine efficacy
 
@@ -225,6 +227,7 @@ stargazer(model1_black,
           notes.append = TRUE,
           omit.stat=c("f"))
 ```
+<br/><br/>
 The regression table shows the coefficients for each demographic of interest. Each has a statistically significant and negative value indicating an average reduction in deaths: 0.06 fewer per day for Black Chicagoans, 0.07 fewer for Latinx, and 0.18 for 60 and over. The chart below shows the same data in weekly totals to aid visual clarity.
 <br/><br/>
 ```{r}
